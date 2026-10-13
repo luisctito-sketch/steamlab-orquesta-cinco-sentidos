@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>STEAMLab — La orquesta de los cinco sentidos</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,Segoe UI,Arial,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:#07162b;color:white;min-height:100vh}
+header{padding:12px 16px;text-align:center;background:#0d2948;border-bottom:1px solid #286481}
+h1{font-size:clamp(1.05rem,2.3vw,1.65rem);margin:0}header p{margin:4px 0;font-size:.9rem;color:#bedfee}
+main{max-width:1050px;margin:0 auto;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:9px}
+.controls{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:10px;width:100%}
+button{cursor:pointer;padding:10px 20px;border-radius:12px;border:1px solid #2f728d;font-size:1rem;font-weight:800;background:#245275;color:#fff;min-height:44px}
+#start{background:#00b9a9;color:#05242a}#stop{background:#d54a50}button:disabled{opacity:.45;cursor:not-allowed}
+.status{color:#e6f9ff;text-align:center;font-size:.92rem;min-height:1.4em}
+.card-holder{display:flex;justify-content:center;align-items:center;width:100%;height:min(73vh,790px);min-height:260px}
+#card{display:block;max-width:100%;max-height:100%;object-fit:contain;border-radius:12px;box-shadow:0 10px 28px #0008}
+.progress{height:7px;background:#1c4361;border-radius:50px;width:min(500px,90%);overflow:hidden}
+#bar{height:100%;width:0%;background:#24d8e4}
+.note{font-size:.82rem;text-align:center;color:#9ecde0;margin:0 0 12px}
+:fullscreen main{max-width:100vw;height:100vh;justify-content:center}
+:fullscreen .card-holder{height:78vh}
+@media(max-width:600px){main{padding:8px}.card-holder{height:67vh}button{padding:9px 15px}}
+</style></head><body>
+<header><h1>STEAMLab · Recreo cerebral N.º 4</h1><p>La orquesta de los cinco sentidos · Tarjetas al azar</p></header>
+<main>
+<div class="controls"><button id="start" type="button">▶ Empezar</button><button id="stop" type="button" disabled>■ Detener</button><button id="full" type="button">⛶ Pantalla completa</button></div>
+<div class="status" id="status" role="status" aria-live="polite">Listo · cambia de tarjeta cada 3 segundos</div>
+<div class="card-holder"><img id="card" src="roja.png" alt="Tarjeta roja: una palmada" width="1086" height="1448"></div>
+<div class="progress"><div id="bar"></div></div>
+<p class="note">Roja: una palmada · Azul: dos golpes suaves · Verde: levantar ambas manos · Amarilla: guardar silencio. No se repite la misma tarjeta consecutivamente.</p>
+</main>
+<script>
+(()=>{
+ const cards=[{file:'roja.png',name:'Roja — 1 palmada'},{file:'azul.png',name:'Azul — 2 golpes suaves sobre las piernas'},{file:'verde.png',name:'Verde — levantar ambas manos'},{file:'amarilla.png',name:'Amarilla — guardar silencio'}];
+ const duration=3000;let current=0,active=false,timer=null,raf=null,started=0,remaining=duration;
+ const image=document.querySelector('#card'),start=document.querySelector('#start'),stop=document.querySelector('#stop'),status=document.querySelector('#status'),bar=document.querySelector('#bar'),full=document.querySelector('#full');
+ cards.forEach(c=>{const i=new Image();i.src=c.file});
+ function show(index){current=index;image.src=cards[index].file;image.alt='Tarjeta '+cards[index].name;status.textContent='En pantalla: '+cards[index].name+' · 3 segundos';}
+ function next(){let index=Math.floor(Math.random()*(cards.length-1));if(index>=current)index++;show(index);remaining=duration;started=performance.now();}
+ function animate(now){if(!active)return;const elapsed=Math.min(duration,now-started);bar.style.width=(elapsed/duration*100)+'%';raf=requestAnimationFrame(animate)}
+ function tick(){if(!active)return;next()}
+ function begin(){if(active)return;active=true;start.disabled=true;stop.disabled=false;next();timer=setInterval(tick,duration);cancelAnimationFrame(raf);raf=requestAnimationFrame(animate)}
+ function halt(){active=false;clearInterval(timer);cancelAnimationFrame(raf);timer=null;raf=null;start.disabled=false;stop.disabled=true;bar.style.width='0%';status.textContent='Detenido · Presiona Empezar para continuar';}
+ start.addEventListener('click',begin);stop.addEventListener('click',halt);
+ full.addEventListener('click',async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{status.textContent='Tu navegador no permite pantalla completa en esta vista.'}});
+ document.addEventListener('visibilitychange',()=>{if(document.hidden&&active)halt()});
+ window.addEventListener('pagehide',()=>{clearInterval(timer);cancelAnimationFrame(raf)});
+})();
+</script></body></html>
